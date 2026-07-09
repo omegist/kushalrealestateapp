@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Phone, MessageCircle, Mail, MapPin, Send, Loader2, CheckCircle2, Lock } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import { Phone, MessageCircle, Mail, MapPin, Send, Loader2, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -38,6 +38,27 @@ const schema = z.object({
 
 function ContactPage() {
   const { propertyId, title } = Route.useSearch();
+  const navigate = useNavigate();
+  const tapCount = useRef(0);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Discreet staff entry point: tap the footer text 5 times within 2s to
+  // reach /auth. Nothing here reads "Staff" or "Admin" or shows a lock icon,
+  // so customers browsing the Enquiry page have no reason to think this is
+  // a login control — but staff on the installed APK (no address bar) can
+  // still find their way in.
+  const handleFooterTap = () => {
+    tapCount.current += 1;
+    if (tapTimer.current) clearTimeout(tapTimer.current);
+    if (tapCount.current >= 5) {
+      tapCount.current = 0;
+      navigate({ to: "/auth" });
+      return;
+    }
+    tapTimer.current = setTimeout(() => {
+      tapCount.current = 0;
+    }, 2000);
+  };
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({
@@ -151,12 +172,18 @@ function ContactPage() {
           </form>
         )}
 
-        {/* Discreet staff entry point — needed because an installed APK has no
-            address bar to reach the admin dashboard by URL. */}
+        {/* Discreet staff entry point — needed because an installed APK has
+            no address bar to reach the admin dashboard by URL. Deliberately
+            unlabeled: tap 5 times within 2s to open /auth. Customers just
+            see ordinary footer text, not anything resembling a login. */}
         <div className="mt-8 flex justify-center pb-2">
-          <Link to="/auth" className="flex items-center gap-1.5 text-[11px] font-600 text-muted-foreground">
-            <Lock className="h-3 w-3" /> Staff / Admin Login
-          </Link>
+          <button
+            type="button"
+            onClick={handleFooterTap}
+            className="select-none bg-transparent text-[11px] font-500 text-muted-foreground/60"
+          >
+            {BRAND.name}
+          </button>
         </div>
       </main>
     </AppShell>

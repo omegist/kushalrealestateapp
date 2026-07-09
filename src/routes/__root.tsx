@@ -9,6 +9,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { FavoritesProvider } from "@/lib/useFavorites";
 
 function NotFoundComponent() {
   return (
@@ -93,8 +94,10 @@ function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster position="top-center" richColors />
+      <FavoritesProvider>
+        <Outlet />
+        <Toaster position="top-center" richColors />
+      </FavoritesProvider>
     </QueryClientProvider>
   );
 }

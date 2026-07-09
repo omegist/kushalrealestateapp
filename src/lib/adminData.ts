@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { supabaseContent } from "@/integrations/supabase/client.content";
 import type { Property, Category, Banner, TeamMember, Enquiry, Review } from "./types";
 
 export function useAdminProperties() {
@@ -18,9 +17,31 @@ export function useAdminCategories() {
   return useQuery({
     queryKey: ["admin", "categories"],
     queryFn: async (): Promise<Category[]> => {
-      const { data, error } = await supabaseContent.from("property_categories").select("*").order("sort_order");
+      const { data, error } = await supabase.from("property_categories").select("*").order("sort_order");
       if (error) throw error;
       return (data ?? []) as Category[];
+    },
+  });
+}
+
+export function useAdminTeam() {
+  return useQuery({
+    queryKey: ["admin", "team"],
+    queryFn: async (): Promise<TeamMember[]> => {
+      const { data, error } = await supabase.from("team_members").select("*").order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as TeamMember[];
+    },
+  });
+}
+
+export function useAdminBanners() {
+  return useQuery({
+    queryKey: ["admin", "banners"],
+    queryFn: async (): Promise<Banner[]> => {
+      const { data, error } = await supabase.from("banners").select("*").order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as Banner[];
     },
   });
 }
@@ -36,17 +57,6 @@ export function useAdminEnquiries() {
   });
 }
 
-export function useAdminTeam() {
-  return useQuery({
-    queryKey: ["admin", "team"],
-    queryFn: async (): Promise<TeamMember[]> => {
-      const { data, error } = await supabaseContent.from("team_members").select("*").order("sort_order");
-      if (error) throw error;
-      return (data ?? []) as TeamMember[];
-    },
-  });
-}
-
 export function useAdminReviews() {
   return useQuery({
     queryKey: ["admin", "reviews"],
@@ -54,17 +64,6 @@ export function useAdminReviews() {
       const { data, error } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Review[];
-    },
-  });
-}
-
-export function useAdminBanners() {
-  return useQuery({
-    queryKey: ["admin", "banners"],
-    queryFn: async (): Promise<Banner[]> => {
-      const { data, error } = await supabaseContent.from("banners").select("*").order("sort_order");
-      if (error) throw error;
-      return (data ?? []) as Banner[];
     },
   });
 }
