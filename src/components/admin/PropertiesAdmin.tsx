@@ -89,6 +89,14 @@ export function PropertiesAdmin() {
       return;
     }
     setSaving(true);
+    // Compute this first: if no cover image was explicitly chosen, fall back
+    // to the first gallery image. Previously cover_image was left null
+    // whenever an admin only used "Gallery Images" and skipped "Cover Image"
+    // — since property cards only ever render cover_image, those listings
+    // showed up with a blank photo everywhere except the detail page.
+    const imageUrls: string[] = (Array.isArray(form.images) ? form.images : []).filter(Boolean);
+    const coverImage = form.cover_image || imageUrls[0] || null;
+
     const payload: any = {
       title: form.title.trim(),
       description: form.description || null,
@@ -112,7 +120,7 @@ export function PropertiesAdmin() {
       contact_phone_alt: form.contact_phone_alt || null,
       map_lat: form.map_lat === "" ? null : Number(form.map_lat),
       map_lng: form.map_lng === "" ? null : Number(form.map_lng),
-      cover_image: form.cover_image || null,
+      cover_image: coverImage,
       video_url: form.video_url?.trim() || null,
       featured: !!form.featured,
       status: form.status,
@@ -129,7 +137,6 @@ export function PropertiesAdmin() {
     }
 
     // sync images
-    const imageUrls: string[] = (Array.isArray(form.images) ? form.images : []).filter(Boolean);
     if (propertyId) {
       await supabase.from("property_images").delete().eq("property_id", propertyId);
       if (imageUrls.length) {

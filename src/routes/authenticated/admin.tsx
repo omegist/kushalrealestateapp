@@ -13,7 +13,6 @@ import { EnquiriesAdmin } from "@/components/admin/EnquiriesAdmin";
 import { TeamAdmin } from "@/components/admin/TeamAdmin";
 import { BannersAdmin } from "@/components/admin/BannersAdmin";
 import { ReviewsAdmin } from "@/components/admin/ReviewsAdmin";
-import { AdminsAdmin } from "@/components/admin/AdminsAdmin";
 import { btnGhost } from "@/components/admin/ui";
 import { toast } from "sonner";
 
@@ -24,7 +23,7 @@ export const Route = createFileRoute("/authenticated/admin")(
   }
 );
 
-type Tab = "overview" | "properties" | "enquiries" | "reviews" | "team" | "banners" | "admins";
+type Tab = "overview" | "properties" | "enquiries" | "reviews" | "team" | "banners";
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "properties", label: "Properties", icon: Building2 },
@@ -32,7 +31,6 @@ const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: "reviews", label: "Reviews", icon: Star },
   { id: "team", label: "Team", icon: Users },
   { id: "banners", label: "Banners", icon: Images },
-  { id: "admins", label: "Admin Access", icon: ShieldCheck },
 ];
 
 function AdminDashboard() {
@@ -131,7 +129,6 @@ function AdminDashboard() {
           {tab === "reviews" && <ReviewsAdmin />}
           {tab === "team" && <TeamAdmin />}
           {tab === "banners" && <BannersAdmin />}
-          {tab === "admins" && <AdminsAdmin adminCount={state.adminCount} />}
         </main>
       </div>
     </div>

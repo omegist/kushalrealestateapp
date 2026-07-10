@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  Bell,
   ChevronRight,
   Home as HomeIcon,
   Building2,
@@ -15,6 +14,7 @@ import {
   Gem,
   TrendingUp,
   BedDouble,
+  UserCircle2,
 } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { Splash } from "@/components/app/Splash";
@@ -22,7 +22,9 @@ import { Logo } from "@/components/app/Logo";
 import { HeroSlider } from "@/components/app/HeroSlider";
 import { PropertyCard } from "@/components/app/PropertyCard";
 import { SmartSearch } from "@/components/app/SmartSearch";
+import { NotificationsBell } from "@/components/app/NotificationsBell";
 import { useBanners, useCategories, useFeaturedProperties, useProperties } from "@/lib/data";
+import { useFavorites } from "@/lib/useFavorites";
 import { BRAND, telLink } from "@/lib/brand";
 import founder from "@/assets/founder-anil.png";
 
@@ -55,6 +57,7 @@ function Home() {
   const { data: categories = [] } = useCategories();
   const { data: featured = [] } = useFeaturedProperties();
   const { data: all = [] } = useProperties();
+  const { user } = useFavorites();
 
   const runSearch = (v: string) => {
     navigate({ to: "/properties", search: { q: v || undefined } as never });
@@ -66,12 +69,23 @@ function Home() {
 
       {/* Header */}
       <header className="sticky top-0 z-30 glass px-4 pb-3 pt-[max(0.85rem,env(safe-area-inset-top))]">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <Logo />
-          <button className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card">
-            <Bell className="h-4.5 w-4.5 text-foreground" />
-            <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-gradient-gold" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Customers need an account to save favorites/enquire — a plain,
+                clearly-labeled Login here (not staff-only) is the normal way
+                in. The same first-5-signups-become-admin rule still applies
+                behind the scenes, this button is just the front door. */}
+            {!user && (
+              <Link
+                to="/auth"
+                className="flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-xs font-700 text-foreground"
+              >
+                <UserCircle2 className="h-4 w-4 text-gold" /> Login
+              </Link>
+            )}
+            <NotificationsBell />
+          </div>
         </div>
         <div className="mt-3">
           <SmartSearch value={q} onChange={setQ} onSubmit={runSearch} properties={all} />
