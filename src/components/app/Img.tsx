@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ImageOff } from "lucide-react";
 import { optimizedImage, srcSetFor, type ImgOpts } from "@/lib/img";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,10 @@ type ImgProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src" | "srcSet"
  *  - Native `loading="lazy"` + `decoding="async"` on everything.
  *  - Responsive `srcSet`/`sizes` so phones download small files.
  *  - Blur-up: fades in once decoded to avoid layout flashes.
+ *  - On error: shows a visible placeholder instead of staying invisible
+ *    forever. Previously there was no onError handler, so a broken/blocked
+ *    image URL just sat at opacity-0 permanently — indistinguishable from
+ *    "no photo uploaded" even though the property actually had one.
  */
 export function Img({
   src,
@@ -33,7 +38,16 @@ export function Img({
   ...rest
 }: ImgProps) {
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const opts: ImgOpts = { width, quality, resize };
+
+  if (!src || failed) {
+    return (
+      <div className={cn("flex items-center justify-center bg-secondary text-muted-foreground/50", className)}>
+        <ImageOff className="h-1/4 w-1/4 min-h-4 min-w-4" />
+      </div>
+    );
+  }
 
   return (
     <img
@@ -46,6 +60,7 @@ export function Img({
       // @ts-expect-error fetchPriority is valid but not yet in this React types version
       fetchpriority={eager ? "high" : undefined}
       onLoad={() => setLoaded(true)}
+      onError={() => setFailed(true)}
       className={cn("transition-opacity duration-500", loaded ? "opacity-100" : "opacity-0", className)}
       {...rest}
     />

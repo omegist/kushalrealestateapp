@@ -1,14 +1,23 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, BedDouble, Bath, Maximize, BadgeCheck } from "lucide-react";
+import { Heart, MapPin, BedDouble, Bath, Maximize, BadgeCheck, Images } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { formatPrice } from "@/lib/brand";
 import { useFavorites } from "@/lib/useFavorites";
 import { Img } from "@/components/app/Img";
+import { PropertyPhotosModal } from "@/components/app/PropertyPhotosModal";
 import { cn } from "@/lib/utils";
 
-export function PropertyCard({ property, view = "grid" }: { property: Property; view?: "grid" | "list" }) {
+export function PropertyCard({
+  property,
+  view = "grid",
+}: {
+  property: Property;
+  view?: "grid" | "list";
+}) {
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(property.id);
+  const [showPhotos, setShowPhotos] = useState(false);
 
   const favBtn = (className: string) => (
     <button
@@ -25,8 +34,31 @@ export function PropertyCard({ property, view = "grid" }: { property: Property; 
       )}
     >
       <Heart
-        className={cn("h-[18px] w-[18px] transition-colors", fav ? "fill-destructive text-destructive" : "text-foreground/70")}
+        className={cn(
+          "h-[18px] w-[18px] transition-colors",
+          fav ? "fill-destructive text-destructive" : "text-foreground/70",
+        )}
       />
+    </button>
+  );
+
+  // Opens the full photo gallery without navigating to the detail page.
+  const viewPhotosBtn = (className: string) => (
+    <button
+      type="button"
+      aria-label="View all photos"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowPhotos(true);
+      }}
+      className={cn(
+        "z-10 flex items-center gap-1 rounded-full bg-black/60 text-white backdrop-blur transition-transform active:scale-95",
+        className,
+      )}
+    >
+      <Images className="h-3.5 w-3.5" />
+      <span className="text-[10px] font-700">View Photos</span>
     </button>
   );
 
@@ -38,6 +70,10 @@ export function PropertyCard({ property, view = "grid" }: { property: Property; 
     </span>
   );
 
+  const PhotosModal = showPhotos && (
+    <PropertyPhotosModal property={property} onClose={() => setShowPhotos(false)} />
+  );
+
   if (view === "list") {
     return (
       <Link
@@ -47,7 +83,13 @@ export function PropertyCard({ property, view = "grid" }: { property: Property; 
       >
         {favBtn("absolute right-2.5 top-2.5 h-8 w-8")}
         <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl">
-          <Img src={property.cover_image} alt={property.title} width={128} className="h-full w-full object-cover" />
+          <Img
+            src={property.cover_image}
+            alt={property.title}
+            width={128}
+            className="h-full w-full object-cover"
+          />
+          {viewPhotosBtn("absolute bottom-1.5 left-1.5 px-2 py-1")}
         </div>
         <div className="min-w-0 flex-1 py-0.5 pr-8">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -62,17 +104,33 @@ export function PropertyCard({ property, view = "grid" }: { property: Property; 
               </span>
             )}
           </div>
-          <h3 className="mt-1 line-clamp-1 text-[15px] font-800 text-foreground">{property.title}</h3>
+          {property.contact_name && (
+            <p className="mt-1 text-[10px] font-700 uppercase tracking-wide text-gold">
+              {property.contact_name}
+            </p>
+          )}
+          <h3 className="mt-1 line-clamp-1 text-[15px] font-800 text-foreground">
+            {property.title}
+          </h3>
           <p className="mt-0.5 flex items-center gap-1 text-xs font-500 text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0 text-gold" />
             <span className="line-clamp-1">{property.location}</span>
           </p>
           <p className="mt-1.5 text-lg font-900 text-foreground">{formatPrice(property)}</p>
           <div className="mt-1.5 flex items-center gap-3 text-[11px] font-600 text-muted-foreground">
-            {property.bedrooms && <span className="flex items-center gap-1"><BedDouble className="h-3.5 w-3.5" /> {property.bedrooms}</span>}
-            {property.builtup_area && <span className="flex items-center gap-1"><Maximize className="h-3.5 w-3.5" /> {property.builtup_area}</span>}
+            {property.bedrooms && (
+              <span className="flex items-center gap-1">
+                <BedDouble className="h-3.5 w-3.5" /> {property.bedrooms}
+              </span>
+            )}
+            {property.builtup_area && (
+              <span className="flex items-center gap-1">
+                <Maximize className="h-3.5 w-3.5" /> {property.builtup_area}
+              </span>
+            )}
           </div>
         </div>
+        {PhotosModal}
       </Link>
     );
   }
@@ -91,7 +149,7 @@ export function PropertyCard({ property, view = "grid" }: { property: Property; 
           width={280}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute bottom-2 left-2 flex items-center gap-1">
+        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
           {property.featured && (
             <span className="rounded-full bg-gradient-gold px-2 py-0.5 text-[10px] font-800 text-primary-foreground shadow-gold">
               Featured
@@ -99,14 +157,24 @@ export function PropertyCard({ property, view = "grid" }: { property: Property; 
           )}
           {VerifiedBadge}
         </div>
+        {viewPhotosBtn("absolute bottom-2 right-2 px-2.5 py-1.5")}
       </div>
       <div className="p-3.5">
-        <h3 className="line-clamp-1 text-[15px] font-800 leading-tight text-foreground">{property.title}</h3>
+        {property.contact_name && (
+          <p className="mb-1 text-[10px] font-700 uppercase tracking-wide text-gold">
+            {property.contact_name}
+          </p>
+        )}
+        <h3 className="line-clamp-1 text-[15px] font-800 leading-tight text-foreground">
+          {property.title}
+        </h3>
         <p className="mt-1 flex items-center gap-1 text-xs font-500 text-muted-foreground">
           <MapPin className="h-3 w-3 shrink-0 text-gold" />
           <span className="line-clamp-1">{property.location}</span>
         </p>
-        <p className="mt-2 text-xl font-900 tracking-tight text-foreground">{formatPrice(property)}</p>
+        <p className="mt-2 text-xl font-900 tracking-tight text-foreground">
+          {formatPrice(property)}
+        </p>
         <div className="mt-2.5 flex items-center gap-3 border-t border-border pt-2.5 text-[11px] font-600 text-muted-foreground">
           {property.bedrooms && (
             <span className="flex items-center gap-1">
@@ -125,6 +193,7 @@ export function PropertyCard({ property, view = "grid" }: { property: Property; 
           )}
         </div>
       </div>
+      {PhotosModal}
     </Link>
   );
 }

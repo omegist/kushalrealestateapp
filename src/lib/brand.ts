@@ -28,11 +28,11 @@ export function whatsappLink(raw: string, message?: string): string {
   return `https://wa.me/${phone}${text}`;
 }
 
-export function defaultEnquiryMessage(propertyTitle?: string): string {
+export function defaultEnquiryMessage(propertyTitle?: string, businessName = BRAND.name): string {
   if (propertyTitle) {
-    return `Hello Kushal Enterprises, I am interested in this property: "${propertyTitle}". Please share more details.`;
+    return `Hello ${businessName}, I am interested in this property: "${propertyTitle}". Please share more details.`;
   }
-  return "Hello Kushal Enterprises, I am interested in your properties. Please share more details.";
+  return `Hello ${businessName}, I am interested in your properties. Please share more details.`;
 }
 
 export function formatPrice(p: { price_label: string | null; price_value: number | null }): string {

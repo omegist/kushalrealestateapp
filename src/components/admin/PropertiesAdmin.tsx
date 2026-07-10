@@ -11,6 +11,11 @@ import type { Property } from "@/lib/types";
 
 type FormState = Record<string, any>;
 
+const agencies = {
+  "Kushal Enterprises": "9326313320",
+  "Bhoomi Realty": "8424872525",
+} as const;
+
 const empty: FormState = {
   title: "",
   description: "",
@@ -29,9 +34,9 @@ const empty: FormState = {
   construction_age: "",
   amenities: "",
   features: "",
-  contact_name: "Anil",
-  contact_phone: "9029847968",
-  contact_phone_alt: "9326313320",
+  contact_name: "Kushal Enterprises",
+  contact_phone: agencies["Kushal Enterprises"],
+  contact_phone_alt: "9029847968",
   map_lat: "",
   map_lng: "",
   cover_image: "",
@@ -64,10 +69,20 @@ export function PropertiesAdmin() {
 
   const openEdit = async (p: Property) => {
     setEditing(p);
-    const { data: imgs } = await supabase.from("property_images").select("image_url").eq("property_id", p.id).order("sort_order");
+    const { data: imgs } = await supabase
+      .from("property_images")
+      .select("image_url")
+      .eq("property_id", p.id)
+      .order("sort_order");
     setForm({
       ...empty,
       ...p,
+      contact_name:
+        p.contact_name && p.contact_name in agencies ? p.contact_name : "Kushal Enterprises",
+      contact_phone:
+        p.contact_name && p.contact_name in agencies
+          ? p.contact_phone
+          : agencies["Kushal Enterprises"],
       price_value: p.price_value ?? "",
       bathrooms: p.bathrooms ?? "",
       map_lat: p.map_lat ?? "",
@@ -80,8 +95,18 @@ export function PropertiesAdmin() {
     setOpen(true);
   };
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value }));
+  const set =
+    (k: string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm((f) => ({
+        ...f,
+        [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value,
+      }));
+
+  const setAgency = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const agency = event.target.value as keyof typeof agencies;
+    setForm((form) => ({ ...form, contact_name: agency, contact_phone: agencies[agency] }));
+  };
 
   const save = async () => {
     if (!form.title?.trim() || !form.location?.trim()) {
@@ -113,8 +138,14 @@ export function PropertiesAdmin() {
       carpet_area: form.carpet_area || null,
       floor_info: form.floor_info || null,
       construction_age: form.construction_age || null,
-      amenities: String(form.amenities || "").split(",").map((s: string) => s.trim()).filter(Boolean),
-      features: String(form.features || "").split(",").map((s: string) => s.trim()).filter(Boolean),
+      amenities: String(form.amenities || "")
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean),
+      features: String(form.features || "")
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean),
       contact_name: form.contact_name || null,
       contact_phone: form.contact_phone || null,
       contact_phone_alt: form.contact_phone_alt || null,
@@ -129,10 +160,22 @@ export function PropertiesAdmin() {
     let propertyId = editing?.id;
     if (editing) {
       const { error } = await supabase.from("properties").update(payload).eq("id", editing.id);
-      if (error) { setSaving(false); toast.error(error.message); return; }
+      if (error) {
+        setSaving(false);
+        toast.error(error.message);
+        return;
+      }
     } else {
-      const { data, error } = await supabase.from("properties").insert(payload).select("id").single();
-      if (error) { setSaving(false); toast.error(error.message); return; }
+      const { data, error } = await supabase
+        .from("properties")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) {
+        setSaving(false);
+        toast.error(error.message);
+        return;
+      }
       propertyId = data.id;
     }
 
@@ -140,9 +183,11 @@ export function PropertiesAdmin() {
     if (propertyId) {
       await supabase.from("property_images").delete().eq("property_id", propertyId);
       if (imageUrls.length) {
-        await supabase.from("property_images").insert(
-          imageUrls.map((url, i) => ({ property_id: propertyId, image_url: url, sort_order: i })),
-        );
+        await supabase
+          .from("property_images")
+          .insert(
+            imageUrls.map((url, i) => ({ property_id: propertyId, image_url: url, sort_order: i })),
+          );
       }
     }
 
@@ -172,7 +217,9 @@ export function PropertiesAdmin() {
           <h2 className="font-display text-xl font-700 text-foreground">Properties</h2>
           <p className="text-sm text-muted-foreground">{properties.length} listings</p>
         </div>
-        <button onClick={openNew} className={btnGold}><Plus className="h-4 w-4" /> Add Property</button>
+        <button onClick={openNew} className={btnGold}>
+          <Plus className="h-4 w-4" /> Add Property
+        </button>
       </div>
 
       {isLoading ? (
@@ -195,7 +242,9 @@ export function PropertiesAdmin() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-secondary">
-                        {p.cover_image && <img src={p.cover_image} alt="" className="h-full w-full object-cover" />}
+                        {p.cover_image && (
+                          <img src={p.cover_image} alt="" className="h-full w-full object-cover" />
+                        )}
                       </div>
                       <div className="min-w-0">
                         <p className="truncate font-600 text-foreground">{p.title}</p>
@@ -204,15 +253,35 @@ export function PropertiesAdmin() {
                     </div>
                   </td>
                   <td className="px-4 py-3 capitalize text-muted-foreground">{p.category_slug}</td>
-                  <td className="hidden px-4 py-3 text-foreground md:table-cell">{formatPrice(p)}</td>
-                  <td className="hidden px-4 py-3 sm:table-cell"><span className="rounded-full bg-secondary px-2 py-0.5 text-xs capitalize text-foreground">{p.status}</span></td>
+                  <td className="hidden px-4 py-3 text-foreground md:table-cell">
+                    {formatPrice(p)}
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs capitalize text-foreground">
+                      {p.status}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1.5">
-                      <button onClick={() => toggleFeatured(p)} title="Toggle featured" className={`flex h-8 w-8 items-center justify-center rounded-lg border border-border ${p.featured ? "text-gold" : "text-muted-foreground"}`}>
+                      <button
+                        onClick={() => toggleFeatured(p)}
+                        title="Toggle featured"
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg border border-border ${p.featured ? "text-gold" : "text-muted-foreground"}`}
+                      >
                         <Star className="h-4 w-4" fill={p.featured ? "currentColor" : "none"} />
                       </button>
-                      <button onClick={() => openEdit(p)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-foreground"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => remove(p)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-destructive"><Trash2 className="h-4 w-4" /></button>
+                      <button
+                        onClick={() => openEdit(p)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-foreground"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => remove(p)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -222,45 +291,230 @@ export function PropertiesAdmin() {
         </div>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title={editing ? "Edit Property" : "Add Property"} wide>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={editing ? "Edit Property" : "Add Property"}
+        wide
+      >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2"><AdminField label="Title *"><input className={adminInput} value={form.title} onChange={set("title")} /></AdminField></div>
-          <div className="sm:col-span-2"><AdminField label="Description"><textarea rows={3} className={adminInput} value={form.description} onChange={set("description")} /></AdminField></div>
-          <AdminField label="Category"><select className={adminInput} value={form.category_slug} onChange={set("category_slug")}>{categories.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select></AdminField>
-          <AdminField label="Property Type"><input className={adminInput} value={form.property_type} onChange={set("property_type")} placeholder="2 BHK Flat" /></AdminField>
-          <AdminField label="Location *"><input className={adminInput} value={form.location} onChange={set("location")} /></AdminField>
-          <AdminField label="City"><input className={adminInput} value={form.city} onChange={set("city")} /></AdminField>
-          <AdminField label="Price Label"><input className={adminInput} value={form.price_label} onChange={set("price_label")} placeholder="₹1.45 Cr" /></AdminField>
-          <AdminField label="Price Value (₹)"><input type="number" className={adminInput} value={form.price_value} onChange={set("price_value")} placeholder="14500000" /></AdminField>
-          <AdminField label="Bedrooms"><input className={adminInput} value={form.bedrooms} onChange={set("bedrooms")} placeholder="2 BHK" /></AdminField>
-          <AdminField label="Bathrooms"><input type="number" className={adminInput} value={form.bathrooms} onChange={set("bathrooms")} /></AdminField>
-          <AdminField label="Built-up Area"><input className={adminInput} value={form.builtup_area} onChange={set("builtup_area")} placeholder="1000 sqft" /></AdminField>
-          <AdminField label="Carpet Area"><input className={adminInput} value={form.carpet_area} onChange={set("carpet_area")} placeholder="652 sqft" /></AdminField>
-          <AdminField label="Floor"><input className={adminInput} value={form.floor_info} onChange={set("floor_info")} placeholder="22 / 30" /></AdminField>
-          <AdminField label="Construction Age"><input className={adminInput} value={form.construction_age} onChange={set("construction_age")} placeholder="3 years" /></AdminField>
-          <div className="sm:col-span-2"><AdminField label="Amenities (comma separated)"><textarea rows={2} className={adminInput} value={form.amenities} onChange={set("amenities")} placeholder="Security, Lift Backup, Gym, Swimming Pool" /></AdminField></div>
-          <div className="sm:col-span-2"><AdminField label="Features (comma separated)"><textarea rows={2} className={adminInput} value={form.features} onChange={set("features")} placeholder="Prime Location, Clear Title" /></AdminField></div>
-          <AdminField label="Contact Name"><input className={adminInput} value={form.contact_name} onChange={set("contact_name")} /></AdminField>
-          <AdminField label="Contact Phone"><input className={adminInput} value={form.contact_phone} onChange={set("contact_phone")} /></AdminField>
-          <AdminField label="Alt Phone"><input className={adminInput} value={form.contact_phone_alt} onChange={set("contact_phone_alt")} /></AdminField>
-          <AdminField label="Status"><select className={adminInput} value={form.status} onChange={set("status")}><option value="available">Available</option><option value="sold">Sold</option><option value="hold">On Hold</option></select></AdminField>
-          <AdminField label="Map Latitude"><input className={adminInput} value={form.map_lat} onChange={set("map_lat")} placeholder="19.21" /></AdminField>
-          <AdminField label="Map Longitude"><input className={adminInput} value={form.map_lng} onChange={set("map_lng")} placeholder="72.97" /></AdminField>
-          <div className="sm:col-span-2"><AdminField label="Cover Image">
-            <FileUpload folder="properties" kind="image" value={form.cover_image} onChange={(url) => setForm((f) => ({ ...f, cover_image: url }))} />
-          </AdminField></div>
-          <div className="sm:col-span-2"><AdminField label="Gallery Images">
-            <FileUpload multiple folder="properties" kind="image" value={form.images} onChange={(urls) => setForm((f) => ({ ...f, images: urls }))} />
-          </AdminField></div>
-          <div className="sm:col-span-2"><AdminField label="Property Video (optional)">
-            <VideoField value={form.video_url} onChange={(v) => setForm((f) => ({ ...f, video_url: v }))} />
-          </AdminField></div>
-          <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={form.negotiable} onChange={set("negotiable")} /> Negotiable</label>
-          <label className="flex items-center gap-2 text-sm text-foreground"><input type="checkbox" checked={form.featured} onChange={set("featured")} /> Featured on homepage</label>
+          <div className="sm:col-span-2">
+            <AdminField label="Title *">
+              <input className={adminInput} value={form.title} onChange={set("title")} />
+            </AdminField>
+          </div>
+          <div className="sm:col-span-2">
+            <AdminField label="Description">
+              <textarea
+                rows={3}
+                className={adminInput}
+                value={form.description}
+                onChange={set("description")}
+              />
+            </AdminField>
+          </div>
+          <AdminField label="Category">
+            <select
+              className={adminInput}
+              value={form.category_slug}
+              onChange={set("category_slug")}
+            >
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </AdminField>
+          <AdminField label="Property Type">
+            <input
+              className={adminInput}
+              value={form.property_type}
+              onChange={set("property_type")}
+              placeholder="2 BHK Flat"
+            />
+          </AdminField>
+          <AdminField label="Location *">
+            <input className={adminInput} value={form.location} onChange={set("location")} />
+          </AdminField>
+          <AdminField label="City">
+            <input className={adminInput} value={form.city} onChange={set("city")} />
+          </AdminField>
+          <AdminField label="Price Label">
+            <input
+              className={adminInput}
+              value={form.price_label}
+              onChange={set("price_label")}
+              placeholder="₹1.45 Cr"
+            />
+          </AdminField>
+          <AdminField label="Price Value (₹)">
+            <input
+              type="number"
+              className={adminInput}
+              value={form.price_value}
+              onChange={set("price_value")}
+              placeholder="14500000"
+            />
+          </AdminField>
+          <AdminField label="Bedrooms">
+            <input
+              className={adminInput}
+              value={form.bedrooms}
+              onChange={set("bedrooms")}
+              placeholder="2 BHK"
+            />
+          </AdminField>
+          <AdminField label="Bathrooms">
+            <input
+              type="number"
+              className={adminInput}
+              value={form.bathrooms}
+              onChange={set("bathrooms")}
+            />
+          </AdminField>
+          <AdminField label="Built-up Area">
+            <input
+              className={adminInput}
+              value={form.builtup_area}
+              onChange={set("builtup_area")}
+              placeholder="1000 sqft"
+            />
+          </AdminField>
+          <AdminField label="Carpet Area">
+            <input
+              className={adminInput}
+              value={form.carpet_area}
+              onChange={set("carpet_area")}
+              placeholder="652 sqft"
+            />
+          </AdminField>
+          <AdminField label="Floor">
+            <input
+              className={adminInput}
+              value={form.floor_info}
+              onChange={set("floor_info")}
+              placeholder="22 / 30"
+            />
+          </AdminField>
+          <AdminField label="Construction Age">
+            <input
+              className={adminInput}
+              value={form.construction_age}
+              onChange={set("construction_age")}
+              placeholder="3 years"
+            />
+          </AdminField>
+          <div className="sm:col-span-2">
+            <AdminField label="Amenities (comma separated)">
+              <textarea
+                rows={2}
+                className={adminInput}
+                value={form.amenities}
+                onChange={set("amenities")}
+                placeholder="Security, Lift Backup, Gym, Swimming Pool"
+              />
+            </AdminField>
+          </div>
+          <div className="sm:col-span-2">
+            <AdminField label="Features (comma separated)">
+              <textarea
+                rows={2}
+                className={adminInput}
+                value={form.features}
+                onChange={set("features")}
+                placeholder="Prime Location, Clear Title"
+              />
+            </AdminField>
+          </div>
+          <AdminField label="Property Agency">
+            <select className={adminInput} value={form.contact_name} onChange={setAgency}>
+              <option value="Kushal Enterprises">Kushal Enterprises</option>
+              <option value="Bhoomi Realty">Bhoomi Realty</option>
+            </select>
+          </AdminField>
+          <AdminField label="WhatsApp / Contact Number">
+            <input
+              className={adminInput}
+              value={form.contact_phone}
+              onChange={set("contact_phone")}
+            />
+          </AdminField>
+          <AdminField label="Alt Phone">
+            <input
+              className={adminInput}
+              value={form.contact_phone_alt}
+              onChange={set("contact_phone_alt")}
+            />
+          </AdminField>
+          <AdminField label="Status">
+            <select className={adminInput} value={form.status} onChange={set("status")}>
+              <option value="available">Available</option>
+              <option value="sold">Sold</option>
+              <option value="hold">On Hold</option>
+            </select>
+          </AdminField>
+          <AdminField label="Map Latitude">
+            <input
+              className={adminInput}
+              value={form.map_lat}
+              onChange={set("map_lat")}
+              placeholder="19.21"
+            />
+          </AdminField>
+          <AdminField label="Map Longitude">
+            <input
+              className={adminInput}
+              value={form.map_lng}
+              onChange={set("map_lng")}
+              placeholder="72.97"
+            />
+          </AdminField>
+          <div className="sm:col-span-2">
+            <AdminField label="Cover Image">
+              <FileUpload
+                folder="properties"
+                kind="image"
+                value={form.cover_image}
+                onChange={(url) => setForm((f) => ({ ...f, cover_image: url }))}
+              />
+            </AdminField>
+          </div>
+          <div className="sm:col-span-2">
+            <AdminField label="Gallery Images">
+              <FileUpload
+                multiple
+                folder="properties"
+                kind="image"
+                value={form.images}
+                onChange={(urls) => setForm((f) => ({ ...f, images: urls }))}
+              />
+            </AdminField>
+          </div>
+          <div className="sm:col-span-2">
+            <AdminField label="Property Video (optional)">
+              <VideoField
+                value={form.video_url}
+                onChange={(v) => setForm((f) => ({ ...f, video_url: v }))}
+              />
+            </AdminField>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input type="checkbox" checked={form.negotiable} onChange={set("negotiable")} />{" "}
+            Negotiable
+          </label>
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input type="checkbox" checked={form.featured} onChange={set("featured")} /> Featured on
+            homepage
+          </label>
         </div>
         <div className="mt-5 flex justify-end gap-2">
-          <button onClick={() => setOpen(false)} className={btnGhost}>Cancel</button>
-          <button onClick={save} disabled={saving} className={btnGold}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Save</button>
+          <button onClick={() => setOpen(false)} className={btnGhost}>
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving} className={btnGold}>
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save
+          </button>
         </div>
       </Modal>
     </div>
@@ -278,8 +532,12 @@ function VideoField({ value, onChange }: { value: string; onChange: (v: string) 
   return (
     <div className="space-y-2">
       <div className="flex gap-2">
-        <button type="button" onClick={() => setMode("link")} className={tab(mode === "link")}>Paste YouTube link</button>
-        <button type="button" onClick={() => setMode("upload")} className={tab(mode === "upload")}>Upload video file</button>
+        <button type="button" onClick={() => setMode("link")} className={tab(mode === "link")}>
+          Paste YouTube link
+        </button>
+        <button type="button" onClick={() => setMode("upload")} className={tab(mode === "upload")}>
+          Upload video file
+        </button>
       </div>
       {mode === "link" ? (
         <input
@@ -292,7 +550,11 @@ function VideoField({ value, onChange }: { value: string; onChange: (v: string) 
         <FileUpload folder="videos" kind="video" value={value} onChange={onChange} />
       )}
       {value && (
-        <button type="button" onClick={() => onChange("")} className="text-xs font-600 text-destructive">
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="text-xs font-600 text-destructive"
+        >
           Clear video
         </button>
       )}
