@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
   Home as HomeIcon,
@@ -15,6 +16,8 @@ import {
   TrendingUp,
   BedDouble,
   UserCircle2,
+  LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { Splash } from "@/components/app/Splash";
@@ -25,6 +28,8 @@ import { SmartSearch } from "@/components/app/SmartSearch";
 import { NotificationsBell } from "@/components/app/NotificationsBell";
 import { useBanners, useCategories, useFeaturedProperties, useProperties } from "@/lib/data";
 import { useFavorites } from "@/lib/useFavorites";
+import { getAdminStatus } from "@/lib/admin.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { BRAND, telLink } from "@/lib/brand";
 import founder from "@/assets/founder-anil.png";
 
@@ -59,6 +64,20 @@ function Home() {
   const { data: all = [] } = useProperties();
   const { user } = useFavorites();
 
+  // Only checked once someone is actually logged in — no point querying
+  // user_roles for anonymous visitors.
+  const { data: adminStatus } = useQuery({
+    queryKey: ["admin-status", user?.id],
+    queryFn: getAdminStatus,
+    enabled: !!user,
+  });
+  const isAdmin = !!adminStatus?.isAdmin;
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/" });
+  };
+
   const runSearch = (v: string) => {
     navigate({ to: "/properties", search: { q: v || undefined } as never });
   };
@@ -72,17 +91,35 @@ function Home() {
         <div className="flex items-center justify-between gap-2">
           <Logo />
           <div className="flex items-center gap-2">
-            {/* Customers need an account to save favorites/enquire — a plain,
-                clearly-labeled Login here (not staff-only) is the normal way
-                in. The same first-5-signups-become-admin rule still applies
-                behind the scenes, this button is just the front door. */}
-            {!user && (
+            {!user ? (
+              // Customers need an account to save favorites/enquire — a plain,
+              // clearly-labeled Login here (not staff-only) is the normal way
+              // in. The same first-5-signups-become-admin rule still applies
+              // behind the scenes, this button is just the front door.
               <Link
                 to="/auth"
                 className="flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-xs font-700 text-foreground"
               >
                 <UserCircle2 className="h-4 w-4 text-gold" /> Login
               </Link>
+            ) : (
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/authenticated/admin"
+                    className="flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-xs font-700 text-foreground"
+                  >
+                    <LayoutDashboard className="h-4 w-4 text-gold" /> Back to Dashboard
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="flex h-10 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 text-xs font-700 text-destructive"
+                >
+                  <LogOut className="h-4 w-4" /> Logout
+                </button>
+              </>
             )}
             <NotificationsBell />
           </div>
