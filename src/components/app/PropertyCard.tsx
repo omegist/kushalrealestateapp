@@ -93,6 +93,16 @@ export function PropertyCard({
         </div>
         <div className="min-w-0 flex-1 py-0.5 pr-8">
           <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[10px] font-800",
+                property.listing_type === "rent"
+                  ? "bg-emerald/15 text-emerald"
+                  : "bg-gradient-gold text-primary-foreground",
+              )}
+            >
+              {property.listing_type === "rent" ? "For Rent" : "For Sale"}
+            </span>
             {property.property_type && (
               <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-700 text-foreground">
                 {property.property_type}
@@ -150,6 +160,16 @@ export function PropertyCard({
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-800 shadow-card",
+              property.listing_type === "rent"
+                ? "bg-emerald text-white"
+                : "bg-gradient-gold text-primary-foreground shadow-gold",
+            )}
+          >
+            {property.listing_type === "rent" ? "For Rent" : "For Sale"}
+          </span>
           {property.featured && (
             <span className="rounded-full bg-gradient-gold px-2 py-0.5 text-[10px] font-800 text-primary-foreground shadow-gold">
               Featured

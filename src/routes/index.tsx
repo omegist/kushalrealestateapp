@@ -26,6 +26,7 @@ import { HeroSlider } from "@/components/app/HeroSlider";
 import { PropertyCard } from "@/components/app/PropertyCard";
 import { SmartSearch } from "@/components/app/SmartSearch";
 import { NotificationsBell } from "@/components/app/NotificationsBell";
+import { AutoSlider } from "@/components/app/AutoSlider";
 import { useBanners, useCategories, useFeaturedProperties, useProperties } from "@/lib/data";
 import { useFavorites } from "@/lib/useFavorites";
 import { getAdminStatus } from "@/lib/admin.functions";
@@ -186,22 +187,28 @@ function Home() {
         </section>
 
 
-        {/* Featured */}
-        <section className="pt-7">
-          <div className="px-4">
-            <SectionHeader
-              title="Featured Properties"
-              action={<Link to="/properties" className="flex items-center text-xs font-600 text-gold">View all <ChevronRight className="h-3.5 w-3.5" /></Link>}
-            />
-          </div>
-          <div className="no-scrollbar mt-3 flex gap-3.5 overflow-x-auto px-4 pb-2">
-            {featured.map((p) => (
-              <div key={p.id} className="w-[260px] shrink-0">
-                <PropertyCard property={p} />
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Featured — auto-slides right to left. Falls back to the latest
+            listings so this section is never empty just because no admin
+            has checked "Featured on homepage" yet. */}
+        {(featured.length > 0 || all.length > 0) && (
+          <section className="pt-7">
+            <div className="px-4">
+              <SectionHeader
+                title="Featured Properties"
+                action={<Link to="/properties" className="flex items-center text-xs font-600 text-gold">View all <ChevronRight className="h-3.5 w-3.5" /></Link>}
+              />
+            </div>
+            <div className="mt-3 pl-4">
+              <AutoSlider itemWidth={260}>
+                {(featured.length > 0 ? featured : all.slice(0, 8)).map((p) => (
+                  <div key={p.id} className="w-[260px] shrink-0">
+                    <PropertyCard property={p} />
+                  </div>
+                ))}
+              </AutoSlider>
+            </div>
+          </section>
+        )}
 
         {/* Founder / Trust banner */}
         <section className="px-4 pt-6">

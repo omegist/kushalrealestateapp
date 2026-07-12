@@ -24,6 +24,7 @@ const empty: FormState = {
   location: "",
   city: "Thane",
   price_label: "",
+  listing_type: "sale",
   price_value: "",
   negotiable: true,
   bedrooms: "",
@@ -130,6 +131,7 @@ export function PropertiesAdmin() {
       location: form.location.trim(),
       city: form.city || null,
       price_label: form.price_label || null,
+      listing_type: form.listing_type === "rent" ? "rent" : "sale",
       price_value: form.price_value === "" ? null : Number(form.price_value),
       negotiable: !!form.negotiable,
       bedrooms: form.bedrooms || null,
@@ -324,6 +326,16 @@ export function PropertiesAdmin() {
                   {c.name}
                 </option>
               ))}
+            </select>
+          </AdminField>
+          <AdminField label="Listing Type">
+            <select
+              className={adminInput}
+              value={form.listing_type}
+              onChange={set("listing_type")}
+            >
+              <option value="sale">For Sale</option>
+              <option value="rent">For Rent</option>
             </select>
           </AdminField>
           <AdminField label="Property Type">

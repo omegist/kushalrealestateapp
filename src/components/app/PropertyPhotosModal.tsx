@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ImageOff, MapPin, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff, MapPin, MessageCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Img } from "@/components/app/Img";
-import { formatPrice } from "@/lib/brand";
+import { BRAND, formatPrice, whatsappLink, defaultEnquiryMessage } from "@/lib/brand";
 import type { Property } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -69,13 +69,17 @@ export function PropertyPhotosModal({
     };
   }, []);
 
+  const agencyName = property.contact_name || BRAND.name;
+  const agencyPhone = property.contact_phone || BRAND.phone;
+  const waLink = whatsappLink(agencyPhone, defaultEnquiryMessage(property.title, agencyName));
+
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-stretch justify-center bg-black/70 md:items-center md:p-3"
       onClick={onClose}
     >
       <div
-        className="relative flex h-[min(720px,calc(100vh-1.5rem))] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-card shadow-2xl md:flex-row"
+        className="relative flex h-full w-full flex-col overflow-hidden bg-card shadow-2xl md:h-[min(760px,calc(100vh-1.5rem))] md:max-w-6xl md:flex-row md:rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -89,7 +93,7 @@ export function PropertyPhotosModal({
         </button>
 
         <div
-          className="relative flex min-h-0 flex-1 items-center justify-center bg-secondary p-3 md:w-3/5"
+          className="relative flex min-h-0 shrink-0 basis-[62vh] items-center justify-center bg-black md:basis-auto md:flex-1 md:bg-secondary md:p-3"
           onTouchStart={(event) => {
             touchStartX.current = event.touches[0]?.clientX ?? null;
           }}
@@ -103,9 +107,9 @@ export function PropertyPhotosModal({
           }}
         >
           {isLoading ? (
-            <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-gold" />
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/30 border-t-gold md:border-muted-foreground/30" />
           ) : photos.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <div className="flex flex-col items-center gap-2 text-white/70 md:text-muted-foreground">
               <ImageOff className="h-10 w-10" />
               <p className="text-sm">No photos uploaded for this property yet.</p>
             </div>
@@ -115,9 +119,9 @@ export function PropertyPhotosModal({
                 src={photos[index]}
                 alt={`${property.title} photo ${index + 1}`}
                 eager
-                width={1200}
-                sizes="(max-width: 768px) 92vw, 60vw"
-                className="max-h-full max-w-full select-none object-contain"
+                width={1600}
+                sizes="100vw"
+                className="h-full max-h-full w-full max-w-full select-none object-contain"
               />
               {photos.length > 1 && (
                 <>
@@ -137,20 +141,53 @@ export function PropertyPhotosModal({
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
+                  <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-700 text-white">
+                    {index + 1} / {photos.length}
+                  </span>
                 </>
               )}
             </>
           )}
         </div>
 
-        <aside className="flex min-h-0 w-full flex-col border-t border-border bg-card md:w-2/5 md:border-l md:border-t-0">
+        <aside className="flex min-h-0 flex-1 flex-col overflow-y-auto border-t border-border bg-card md:w-2/5 md:flex-none md:border-l md:border-t-0">
+          {photos.length > 1 && (
+            <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-border p-3 md:hidden">
+              {photos.map((url, photoIndex) => (
+                <button
+                  key={`m-${url}-${photoIndex}`}
+                  type="button"
+                  onClick={() => setIndex(photoIndex)}
+                  className={cn(
+                    "h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2",
+                    photoIndex === index ? "border-gold" : "border-transparent opacity-60",
+                  )}
+                >
+                  <Img src={url} alt="" width={56} className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="p-5 pr-14">
-            {property.contact_name && (
-              <p className="text-xs font-700 uppercase tracking-wide text-gold">
-                Listed by {property.contact_name}
-              </p>
-            )}
-            <h2 className="mt-1 text-xl font-800 leading-tight text-foreground">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[10px] font-800 uppercase tracking-wide",
+                  property.listing_type === "rent"
+                    ? "bg-emerald/15 text-emerald"
+                    : "bg-gradient-gold text-primary-foreground",
+                )}
+              >
+                {property.listing_type === "rent" ? "For Rent" : "For Sale"}
+              </span>
+              {agencyName && (
+                <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-700 text-foreground">
+                  Listed by {agencyName}
+                </span>
+              )}
+            </div>
+            <h2 className="mt-2 text-xl font-800 leading-tight text-foreground">
               {property.title}
             </h2>
             <p className="mt-2 text-2xl font-900 text-foreground">{formatPrice(property)}</p>
@@ -173,16 +210,28 @@ export function PropertyPhotosModal({
                 </span>
               )}
             </div>
+
+            
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-700 text-white shadow-card transition-transform active:scale-[0.98]"
+            >
+              <MessageCircle className="h-4.5 w-4.5" />
+              Chat with {agencyName} on WhatsApp
+            </a>
           </div>
+
           {photos.length > 0 && (
-            <div className="min-h-0 flex-1 border-t border-border p-4">
+            <div className="hidden min-h-0 flex-1 border-t border-border p-4 md:block">
               <p className="mb-3 text-xs font-700 text-muted-foreground">
                 All photos — {index + 1} of {photos.length}
               </p>
-              <div className="grid max-h-full grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4 md:grid-cols-3">
+              <div className="grid max-h-full grid-cols-3 gap-2 overflow-y-auto pr-1">
                 {photos.map((url, photoIndex) => (
                   <button
-                    key={`${url}-${photoIndex}`}
+                    key={`d-${url}-${photoIndex}`}
                     type="button"
                     onClick={() => setIndex(photoIndex)}
                     className={cn(

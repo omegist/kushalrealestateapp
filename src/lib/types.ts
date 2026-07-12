@@ -25,6 +25,7 @@ export interface Property {
   cover_image: string | null;
   featured: boolean;
   status: string;
+  listing_type: "sale" | "rent";
   possession_status: string | null;
   facing: string | null;
   rera_number: string | null;
