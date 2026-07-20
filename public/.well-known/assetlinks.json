@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.kushal_estate_app.twa",
+        "sha256_cert_fingerprints": ["6C:50:D3:0F:B7:4E:12:04:8A:76:57:F1:49:55:10:2D:75:4A:2E:4F:A2:C9:C9:2E:D3:25:46:0C:DB:C3:84:B0"]
+      }
+    }]
