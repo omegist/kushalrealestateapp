@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Loader2, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Star, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminProperties, useAdminCategories } from "@/lib/adminData";
 import { formatPrice } from "@/lib/brand";
+import { geocodeAddress } from "@/lib/geocode";
 import { Modal, AdminField, adminInput, btnGold, btnGhost } from "./ui";
 import { FileUpload } from "./FileUpload";
 import { toast } from "sonner";
@@ -39,6 +40,11 @@ const empty: FormState = {
   contact_phone: agencies["Kushal Enterprises"],
   contact_phone_alt: "9029847968",
   map_lat: "",
+  nearby_hospital: "",
+  nearby_school: "",
+  nearby_highway: "",
+  nearby_market: "",
+  virtual_tour_url: "",
   map_lng: "",
   cover_image: "",
   video_url: "",
@@ -55,6 +61,7 @@ export function PropertiesAdmin() {
   const [editing, setEditing] = useState<Property | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [saving, setSaving] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin"] });
@@ -152,6 +159,11 @@ export function PropertiesAdmin() {
       contact_phone: form.contact_phone || null,
       contact_phone_alt: form.contact_phone_alt || null,
       map_lat: form.map_lat === "" ? null : Number(form.map_lat),
+      nearby_hospital: form.nearby_hospital?.trim() || null,
+      nearby_school: form.nearby_school?.trim() || null,
+      nearby_highway: form.nearby_highway?.trim() || null,
+      nearby_market: form.nearby_market?.trim() || null,
+      virtual_tour_url: form.virtual_tour_url?.trim() || null,
       map_lng: form.map_lng === "" ? null : Number(form.map_lng),
       cover_image: coverImage,
       video_url: form.video_url?.trim() || null,
@@ -482,6 +494,72 @@ export function PropertiesAdmin() {
               placeholder="72.97"
             />
           </AdminField>
+          <div className="sm:col-span-2">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!form.location?.trim()) {
+                  toast.error("Enter the Location field first");
+                  return;
+                }
+                setGeocoding(true);
+                try {
+                  const fullAddress = [form.location, form.city, "India"].filter(Boolean).join(", ");
+                  const coords = await geocodeAddress(fullAddress);
+                  if (coords) {
+                    setForm((f) => ({ ...f, map_lat: String(coords.lat), map_lng: String(coords.lng) }));
+                    toast.success("Coordinates found and filled in");
+                  }
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : "Couldn't find coordinates");
+                } finally {
+                  setGeocoding(false);
+                }
+              }}
+              disabled={geocoding}
+              className={btnGhost}
+            >
+              {geocoding && <Loader2 className="h-4 w-4 animate-spin" />}
+              <MapPin className="h-4 w-4" /> Get Coordinates from Location
+            </button>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Auto-fills the lat/lng above from the Location field using Google Geocoding — needed for this property to appear on Map View.
+            </p>
+          </div>
+
+          <div className="sm:col-span-2 border-t border-border pt-4">
+            <p className="mb-1 text-sm font-800 text-foreground">Neighborhood Highlights (optional)</p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Type distances as free text, e.g. "1.2 km" or "5 min drive" — shown with icons on the property page.
+            </p>
+          </div>
+          <AdminField label="Nearest Hospital">
+            <input className={adminInput} value={form.nearby_hospital} onChange={set("nearby_hospital")} placeholder="1.2 km" />
+          </AdminField>
+          <AdminField label="Nearest School">
+            <input className={adminInput} value={form.nearby_school} onChange={set("nearby_school")} placeholder="0.8 km" />
+          </AdminField>
+          <AdminField label="Nearest Highway">
+            <input className={adminInput} value={form.nearby_highway} onChange={set("nearby_highway")} placeholder="2.5 km" />
+          </AdminField>
+          <AdminField label="Nearest Market">
+            <input className={adminInput} value={form.nearby_market} onChange={set("nearby_market")} placeholder="0.5 km" />
+          </AdminField>
+
+          <div className="sm:col-span-2">
+            <AdminField label="3D / Virtual Tour URL (optional)">
+              <input
+                className={adminInput}
+                value={form.virtual_tour_url}
+                onChange={set("virtual_tour_url")}
+                placeholder="https://my.matterport.com/show/?m=..."
+              />
+            </AdminField>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Paste a Matterport, YouTube 360°, or similar embeddable tour link. Leave blank if none.
+            </p>
+          </div>
+
           <div className="sm:col-span-2">
             <AdminField label="Cover Image">
               <FileUpload

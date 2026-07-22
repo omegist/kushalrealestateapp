@@ -26,6 +26,11 @@ export interface Property {
   featured: boolean;
   status: string;
   listing_type: "sale" | "rent";
+  nearby_hospital: string | null;
+  nearby_school: string | null;
+  nearby_highway: string | null;
+  nearby_market: string | null;
+  virtual_tour_url: string | null;
   possession_status: string | null;
   facing: string | null;
   rera_number: string | null;
