@@ -305,7 +305,12 @@ function PropertyDetails() {
         <section className="px-4 pt-6">
           <h2 className="font-display text-lg">Location on Map</h2>
           <div className="mt-3">
-            <PropertyMap propertyId={property.id} title={property.title} />
+            <PropertyMap
+              propertyId={property.id}
+              title={property.title}
+              fallbackLat={property.map_lat}
+              fallbackLng={property.map_lng}
+            />
           </div>
         </section>
       </main>

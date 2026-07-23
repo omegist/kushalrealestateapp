@@ -1,0 +1,13 @@
+name = "kushal-maps-worker"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "MAPS_DB"
+database_name = "kushal-maps-db"
+database_id = "12387817-e11b-41aa-ad90-90b285b4eaa6"
+
+[vars]
+# The Vite app runs on port 3000 in this repository. Keep 5173 too for the
+# standard Vite default, and retain the production Vercel origin.
+ALLOWED_ORIGINS = "https://kushal-estate-app.vercel.app,http://localhost:3000,http://localhost:5173"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Heart, MapPin, BedDouble, Bath, Maximize, BadgeCheck, Images } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { formatPrice } from "@/lib/brand";
@@ -15,9 +15,23 @@ export function PropertyCard({
   property: Property;
   view?: "grid" | "list";
 }) {
+  const navigate = useNavigate();
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(property.id);
   const [showPhotos, setShowPhotos] = useState(false);
+
+  const openDetails = () => {
+    navigate({ to: "/properties/$id", params: { id: property.id } });
+  };
+
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    // Let the heart and photo buttons keep their own keyboard behavior.
+    if (event.target !== event.currentTarget) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openDetails();
+    }
+  };
 
   const favBtn = (className: string) => (
     <button
@@ -76,9 +90,12 @@ export function PropertyCard({
 
   if (view === "list") {
     return (
-      <Link
-        to="/properties/$id"
-        params={{ id: property.id }}
+      <article
+        role="link"
+        tabIndex={0}
+        aria-label={`View details for ${property.title}`}
+        onClick={openDetails}
+        onKeyDown={handleCardKeyDown}
         className="group relative flex gap-3 overflow-hidden rounded-3xl border border-border bg-card p-2.5 shadow-card transition-transform active:scale-[0.99]"
       >
         {favBtn("absolute right-2.5 top-2.5 h-8 w-8")}
@@ -141,14 +158,17 @@ export function PropertyCard({
           </div>
         </div>
         {PhotosModal}
-      </Link>
+      </article>
     );
   }
 
   return (
-    <Link
-      to="/properties/$id"
-      params={{ id: property.id }}
+    <article
+      role="link"
+      tabIndex={0}
+      aria-label={`View details for ${property.title}`}
+      onClick={openDetails}
+      onKeyDown={handleCardKeyDown}
       className="group relative block overflow-hidden rounded-3xl border border-border bg-card shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-luxury active:scale-[0.98]"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -214,6 +234,6 @@ export function PropertyCard({
         </div>
       </div>
       {PhotosModal}
-    </Link>
+    </article>
   );
 }

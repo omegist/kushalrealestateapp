@@ -36,14 +36,21 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const authUserId = useRef<string | null | undefined>(undefined);
   // Tracks ids with a write in flight so rapid double-clicks on the same
   // heart can't race two opposite requests against each other.
   const pending = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      authUserId.current = data.user?.id ?? null;
+      setUser(data.user);
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null);
+      const nextUser = session?.user ?? null;
+      if (authUserId.current === nextUser?.id) return;
+      authUserId.current = nextUser?.id ?? null;
+      setUser(nextUser);
     });
     return () => subscription.unsubscribe();
   }, []);

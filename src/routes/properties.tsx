@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Search, LayoutGrid, List, SlidersHorizontal, X, Check, Map as MapIcon } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/properties")({
       { name: "description", content: "Explore all verified residential, commercial and plot listings across Thane with Kushal Enterprises." },
     ],
   }),
-  component: PropertiesPage,
+  component: PropertiesRoute,
 });
 
 const CONFIGS = ["1 BHK", "2 BHK", "3 BHK", "4 BHK"];
@@ -60,6 +60,19 @@ const TYPES = ["Apartment", "Villa", "Flat", "Commercial", "Plot"];
 const AMENITIES = ["Gym", "Swimming Pool", "Parking", "Security", "Club House", "Lift", "Garden"];
 const PRICE_MIN = 0;
 const PRICE_MAX = 30000000; // 3 Cr
+
+function PropertiesRoute() {
+  const isPropertyDetail = useRouterState({
+    select: (state) => state.matches.some((match) => match.routeId === "/properties/$id"),
+  });
+
+  // `/properties/$id` is a child route. Without an outlet here, TanStack
+  // Router successfully changes the URL but has nowhere to render the detail
+  // component, leaving the listing page on screen forever.
+  if (isPropertyDetail) return <Outlet />;
+
+  return <PropertiesPage />;
+}
 
 function PropertiesPage() {
   const navigate = useNavigate({ from: "/properties" });

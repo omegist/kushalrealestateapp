@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -81,16 +81,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootLayout() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
+  const lastAuthUserId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      const userId = session?.user.id ?? null;
+
+      // Supabase may emit the same auth event more than once while restoring
+      // a session. Re-invalidating the router here remounted the listing page
+      // and continually restarted its properties/categories/favorites calls.
+      if (lastAuthUserId.current === userId) return;
+      lastAuthUserId.current = userId;
+
+      // Queries that depend on who is signed in (for example, the wishlist)
+      // need new data, but route invalidation is unnecessary: these routes do
+      // not use router loaders and React Query owns their data lifecycle.
+      queryClient.invalidateQueries();
     });
     return () => data.subscription.unsubscribe();
-  }, [queryClient, router]);
+  }, [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>

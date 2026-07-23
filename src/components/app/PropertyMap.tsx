@@ -6,25 +6,38 @@ import { getPropertyCoords, getRoute, googleMapsDirectionsUrl } from "@/lib/maps
 export function PropertyMap({
   propertyId,
   title,
+  fallbackLat,
+  fallbackLng,
 }: {
   propertyId: string;
   title: string;
+  fallbackLat?: number | null;
+  fallbackLng?: number | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [routing, setRouting] = useState(false);
+  const fallbackCoords =
+    fallbackLat != null && fallbackLng != null ? { lat: fallbackLat, lng: fallbackLng } : null;
 
   useEffect(() => {
     let cancelled = false;
     getPropertyCoords(propertyId)
-      .then((c) => !cancelled && setCoords(c))
-      .catch((err) => !cancelled && setError(err.message));
+      .then((c) => !cancelled && setCoords(c ?? fallbackCoords ?? null))
+      .catch((err) => {
+        if (cancelled) return;
+        if (fallbackCoords) {
+          setCoords(fallbackCoords);
+          return;
+        }
+        setError(err.message);
+      });
     return () => {
       cancelled = true;
     };
-  }, [propertyId]);
+  }, [propertyId, fallbackLat, fallbackLng]);
 
   useEffect(() => {
     if (!coords || !containerRef.current) return;
