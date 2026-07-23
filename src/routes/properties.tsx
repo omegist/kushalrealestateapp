@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, LayoutGrid, List, SlidersHorizontal, X, Check } from "lucide-react";
+import { Search, LayoutGrid, List, SlidersHorizontal, X, Check, Map as MapIcon } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
 import { PageHeader } from "@/components/app/PageHeader";
 import { PropertyCard } from "@/components/app/PropertyCard";
 import { SmartSearch } from "@/components/app/SmartSearch";
+import { PropertiesMap } from "@/components/app/PropertiesMap";
 import { useProperties, useCategories } from "@/lib/data";
 import { formatPrice } from "@/lib/brand";
 import { cn } from "@/lib/utils";
@@ -66,7 +67,7 @@ function PropertiesPage() {
   const { data: all = [], isLoading } = useProperties();
   const { data: categories = [] } = useCategories();
 
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list" | "map">("grid");
   const [query, setQuery] = useState(search.q ?? "");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -124,6 +125,9 @@ function PropertiesPage() {
             </button>
             <button onClick={() => setView("list")} className={cn("flex h-8 w-8 items-center justify-center rounded-full", view === "list" && "bg-gradient-primary text-primary-foreground")}>
               <List className="h-4 w-4" />
+            </button>
+            <button onClick={() => setView("map")} className={cn("flex h-8 w-8 items-center justify-center rounded-full", view === "map" && "bg-gradient-primary text-primary-foreground")}>
+              <MapIcon className="h-4 w-4" />
             </button>
           </div>
         }
@@ -188,6 +192,8 @@ function PropertiesPage() {
               </button>
             )}
           </div>
+        ) : view === "map" ? (
+          <PropertiesMap properties={results} />
         ) : view === "grid" ? (
           <div className="grid grid-cols-2 gap-3">
             {results.map((p) => (

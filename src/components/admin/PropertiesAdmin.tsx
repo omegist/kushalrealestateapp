@@ -4,7 +4,7 @@ import { Plus, Pencil, Trash2, Loader2, Star, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminProperties, useAdminCategories } from "@/lib/adminData";
 import { formatPrice } from "@/lib/brand";
-import { geocodeAddress } from "@/lib/geocode";
+import { geocodeAndStore } from "@/lib/mapsWorker";
 import { Modal, AdminField, adminInput, btnGold, btnGhost } from "./ui";
 import { FileUpload } from "./FileUpload";
 import { toast } from "sonner";
@@ -71,7 +71,7 @@ export function PropertiesAdmin() {
 
   const openNew = () => {
     setEditing(null);
-    setForm(empty);
+    setForm({ ...empty, id: crypto.randomUUID() });
     setOpen(true);
   };
 
@@ -131,6 +131,7 @@ export function PropertiesAdmin() {
     const coverImage = form.cover_image || imageUrls[0] || null;
 
     const payload: any = {
+      id: form.id,
       title: form.title.trim(),
       description: form.description || null,
       category_slug: form.category_slug,
@@ -505,11 +506,9 @@ export function PropertiesAdmin() {
                 setGeocoding(true);
                 try {
                   const fullAddress = [form.location, form.city, "India"].filter(Boolean).join(", ");
-                  const coords = await geocodeAddress(fullAddress);
-                  if (coords) {
-                    setForm((f) => ({ ...f, map_lat: String(coords.lat), map_lng: String(coords.lng) }));
-                    toast.success("Coordinates found and filled in");
-                  }
+                  const coords = await geocodeAndStore(form.id, fullAddress);
+                  setForm((f) => ({ ...f, map_lat: String(coords.lat), map_lng: String(coords.lng) }));
+                  toast.success("Location found and saved to the map database");
                 } catch (err) {
                   toast.error(err instanceof Error ? err.message : "Couldn't find coordinates");
                 } finally {
@@ -523,7 +522,7 @@ export function PropertiesAdmin() {
               <MapPin className="h-4 w-4" /> Get Coordinates from Location
             </button>
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Auto-fills the lat/lng above from the Location field using Google Geocoding — needed for this property to appear on Map View.
+              Geocodes the Location field via Ola Maps and stores the pin in the maps database — needed for this property to appear on Map View. Save the property first if this is a brand new listing, then click this.
             </p>
           </div>
 

@@ -24,6 +24,8 @@ import { Img } from "@/components/app/Img";
 import { PropertyVideo } from "@/components/app/PropertyVideo";
 import { ReviewsSection } from "@/components/app/ReviewsSection";
 import { ScheduleVisit } from "@/components/app/ScheduleVisit";
+import { NeighborhoodHighlights } from "@/components/app/NeighborhoodHighlights";
+import { PropertyMap } from "@/components/app/PropertyMap";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/properties/$id")({
@@ -273,6 +275,37 @@ function PropertyDetails() {
                 {a}
               </span>
             ))}
+          </div>
+        </section>
+
+        {(property.nearby_hospital || property.nearby_school || property.nearby_highway || property.nearby_market) && (
+          <section className="px-4 pt-6">
+            <h2 className="font-display text-lg">Neighborhood Highlights</h2>
+            <div className="mt-3">
+              <NeighborhoodHighlights property={property} />
+            </div>
+          </section>
+        )}
+
+        {property.virtual_tour_url && (
+          <section className="px-4 pt-6">
+            <h2 className="font-display text-lg">3D / Virtual Tour</h2>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-border">
+              <iframe
+                src={property.virtual_tour_url}
+                title="Virtual tour"
+                className="aspect-video w-full"
+                allow="xr-spatial-tracking; gyroscope; accelerometer"
+                allowFullScreen
+              />
+            </div>
+          </section>
+        )}
+
+        <section className="px-4 pt-6">
+          <h2 className="font-display text-lg">Location on Map</h2>
+          <div className="mt-3">
+            <PropertyMap propertyId={property.id} title={property.title} />
           </div>
         </section>
       </main>
