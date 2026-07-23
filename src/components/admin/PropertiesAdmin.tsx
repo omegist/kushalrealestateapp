@@ -342,11 +342,7 @@ export function PropertiesAdmin() {
             </select>
           </AdminField>
           <AdminField label="Listing Type">
-            <select
-              className={adminInput}
-              value={form.listing_type}
-              onChange={set("listing_type")}
-            >
+            <select className={adminInput} value={form.listing_type} onChange={set("listing_type")}>
               <option value="sale">For Sale</option>
               <option value="rent">For Rent</option>
             </select>
@@ -505,9 +501,18 @@ export function PropertiesAdmin() {
                 }
                 setGeocoding(true);
                 try {
-                  const fullAddress = [form.location, form.city, "India"].filter(Boolean).join(", ");
+                  // "Kalwa" is not unique enough for geocoding on its own. All
+                  // current listings are in the Mumbai Metropolitan Region, so
+                  // include the state to prevent a match in another part of India.
+                  const fullAddress = [form.location, form.city, "Maharashtra", "India"]
+                    .filter(Boolean)
+                    .join(", ");
                   const coords = await geocodeAndStore(form.id, fullAddress);
-                  setForm((f) => ({ ...f, map_lat: String(coords.lat), map_lng: String(coords.lng) }));
+                  setForm((f) => ({
+                    ...f,
+                    map_lat: String(coords.lat),
+                    map_lng: String(coords.lng),
+                  }));
                   toast.success("Location found and saved to the map database");
                 } catch (err) {
                   toast.error(err instanceof Error ? err.message : "Couldn't find coordinates");
@@ -522,27 +527,52 @@ export function PropertiesAdmin() {
               <MapPin className="h-4 w-4" /> Get Coordinates from Location
             </button>
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Geocodes the Location field via Ola Maps and stores the pin in the maps database — needed for this property to appear on Map View. Save the property first if this is a brand new listing, then click this.
+              Geocodes the Location field via Ola Maps and stores the pin in the maps database —
+              needed for this property to appear on Map View. Save the property first if this is a
+              brand new listing, then click this.
             </p>
           </div>
 
           <div className="sm:col-span-2 border-t border-border pt-4">
-            <p className="mb-1 text-sm font-800 text-foreground">Neighborhood Highlights (optional)</p>
+            <p className="mb-1 text-sm font-800 text-foreground">
+              Neighborhood Highlights (optional)
+            </p>
             <p className="mb-3 text-xs text-muted-foreground">
-              Type distances as free text, e.g. "1.2 km" or "5 min drive" — shown with icons on the property page.
+              Type distances as free text, e.g. "1.2 km" or "5 min drive" — shown with icons on the
+              property page.
             </p>
           </div>
           <AdminField label="Nearest Hospital">
-            <input className={adminInput} value={form.nearby_hospital} onChange={set("nearby_hospital")} placeholder="1.2 km" />
+            <input
+              className={adminInput}
+              value={form.nearby_hospital}
+              onChange={set("nearby_hospital")}
+              placeholder="1.2 km"
+            />
           </AdminField>
           <AdminField label="Nearest School">
-            <input className={adminInput} value={form.nearby_school} onChange={set("nearby_school")} placeholder="0.8 km" />
+            <input
+              className={adminInput}
+              value={form.nearby_school}
+              onChange={set("nearby_school")}
+              placeholder="0.8 km"
+            />
           </AdminField>
           <AdminField label="Nearest Highway">
-            <input className={adminInput} value={form.nearby_highway} onChange={set("nearby_highway")} placeholder="2.5 km" />
+            <input
+              className={adminInput}
+              value={form.nearby_highway}
+              onChange={set("nearby_highway")}
+              placeholder="2.5 km"
+            />
           </AdminField>
           <AdminField label="Nearest Market">
-            <input className={adminInput} value={form.nearby_market} onChange={set("nearby_market")} placeholder="0.5 km" />
+            <input
+              className={adminInput}
+              value={form.nearby_market}
+              onChange={set("nearby_market")}
+              placeholder="0.5 km"
+            />
           </AdminField>
 
           <div className="sm:col-span-2">
@@ -555,7 +585,8 @@ export function PropertiesAdmin() {
               />
             </AdminField>
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Paste a Matterport, YouTube 360°, or similar embeddable tour link. Leave blank if none.
+              Paste a Matterport, YouTube 360°, or similar embeddable tour link. Leave blank if
+              none.
             </p>
           </div>
 

@@ -22,18 +22,38 @@ function loadMaplibre(): Promise<any> {
   return maplibrePromise;
 }
 
-export async function createOlaMap(container: HTMLElement, opts: { center: [number, number]; zoom?: number }) {
-  const apiKey = import.meta.env.VITE_OLA_MAPS_API_KEY as string | undefined;
-  if (!apiKey) {
-    throw new Error("Ola Maps API key is missing (VITE_OLA_MAPS_API_KEY in .env).");
-  }
+/** Creates a MapLibre map using the no-key OpenFreeMap basemap. */
+export async function createPropertyMap(
+  container: HTMLElement,
+  opts: { center: [number, number]; zoom?: number },
+) {
   const maplibregl = await loadMaplibre();
-  return new maplibregl.Map({
+  const map = new maplibregl.Map({
     container,
-    style: `https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json?api_key=${apiKey}`,
+    style: "https://tiles.openfreemap.org/styles/liberty",
     center: opts.center,
     zoom: opts.zoom ?? 15,
   });
+  // MapLibre creates the canvas before it has downloaded the style. Awaiting the
+  // style prevents a successful-looking but completely blank map on a network failure.
+  await new Promise<void>((resolve, reject) => {
+    const onLoad = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = (event: { error?: Error }) => {
+      cleanup();
+      map.remove();
+      reject(event.error ?? new Error("The map could not load its map tiles."));
+    };
+    const cleanup = () => {
+      map.off("load", onLoad);
+      map.off("error", onError);
+    };
+    map.once("load", onLoad);
+    map.once("error", onError);
+  });
+  return map;
 }
 
 export async function getMaplibreGl() {

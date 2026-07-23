@@ -36,7 +36,10 @@ export default {
 
     try {
       if (url.pathname === "/api/geocode" && request.method === "POST") {
-        const { property_id, address } = await request.json<{ property_id?: string; address?: string }>();
+        const { property_id, address } = await request.json<{
+          property_id?: string;
+          address?: string;
+        }>();
         if (!property_id || !address) {
           return json({ error: "property_id and address are required" }, 400, origin, env);
         }
@@ -46,6 +49,19 @@ export default {
           { headers: { "X-Request-Id": crypto.randomUUID() } },
         );
         const geoData = await geoRes.json<any>();
+        if (!geoRes.ok) {
+          return json(
+            {
+              error:
+                geoRes.status === 401 || geoRes.status === 403
+                  ? "Ola Maps authentication failed. Set a valid OLA_MAPS_SECRET_KEY Worker secret."
+                  : "Ola Maps geocoding failed",
+            },
+            502,
+            origin,
+            env,
+          );
+        }
         const result = geoData?.geocodingResults?.[0] ?? geoData?.results?.[0];
         const location = result?.geometry?.location;
         if (!location) {
@@ -87,10 +103,25 @@ export default {
 
       if (url.pathname === "/api/route" && request.method === "POST") {
         const { property_id, origin_lat, origin_lng, dest_lat, dest_lng } = await request.json<{
-          property_id?: string; origin_lat?: number; origin_lng?: number; dest_lat?: number; dest_lng?: number;
+          property_id?: string;
+          origin_lat?: number;
+          origin_lng?: number;
+          dest_lat?: number;
+          dest_lng?: number;
         }>();
-        if (!property_id || origin_lat == null || origin_lng == null || dest_lat == null || dest_lng == null) {
-          return json({ error: "property_id, origin_lat, origin_lng, dest_lat, dest_lng are required" }, 400, origin, env);
+        if (
+          !property_id ||
+          origin_lat == null ||
+          origin_lng == null ||
+          dest_lat == null ||
+          dest_lng == null
+        ) {
+          return json(
+            { error: "property_id, origin_lat, origin_lng, dest_lat, dest_lng are required" },
+            400,
+            origin,
+            env,
+          );
         }
 
         const roundedLat = roundCoord(origin_lat);
@@ -109,7 +140,7 @@ export default {
         }
 
         const routeRes = await fetch(
-          `https://api.olamaps.io/routing/v1/directions?origin=${origin_lat},${origin_lng}&destination=${dest_lat},${dest_lng}&api_key=${env.OLA_MAPS_SECRET_KEY}`,
+          `https://api.olamaps.io/routing/v1/directions/basic?origin=${origin_lat},${origin_lng}&destination=${dest_lat},${dest_lng}&steps=true&overview=full&api_key=${env.OLA_MAPS_SECRET_KEY}`,
           { method: "POST", headers: { "X-Request-Id": crypto.randomUUID() } },
         );
         const routeData = await routeRes.json<any>();
@@ -128,7 +159,12 @@ export default {
 
       return json({ error: "Not found" }, 404, origin, env);
     } catch (err) {
-      return json({ error: err instanceof Error ? err.message : "Unexpected error" }, 500, origin, env);
+      return json(
+        { error: err instanceof Error ? err.message : "Unexpected error" },
+        500,
+        origin,
+        env,
+      );
     }
   },
 };

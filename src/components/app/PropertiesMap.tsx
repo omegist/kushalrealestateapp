@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
-import { createOlaMap, getMaplibreGl } from "@/lib/loadOlaMaps";
+import { createPropertyMap, getMaplibreGl } from "@/lib/loadOlaMaps";
 import { getAllPropertyCoords } from "@/lib/mapsWorker";
 import { formatPrice } from "@/lib/brand";
 import type { Property } from "@/lib/types";
@@ -31,7 +31,7 @@ export function PropertiesMap({ properties }: { properties: Property[] }) {
         }
 
         const center: [number, number] = [pinned[0].coord.lng, pinned[0].coord.lat];
-        const map = await createOlaMap(containerRef.current!, { center, zoom: 11 });
+        const map = await createPropertyMap(containerRef.current!, { center, zoom: 11 });
         const maplibregl = await getMaplibreGl();
 
         const bounds = new maplibregl.LngLatBounds();
